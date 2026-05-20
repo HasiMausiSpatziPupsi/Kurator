@@ -330,7 +330,7 @@ class _CopyDetailScreenState extends ConsumerState<CopyDetailScreen> {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: _locationId,
+            initialValue: _locationId,
             decoration: const InputDecoration(
               labelText: 'Standort',
               border: OutlineInputBorder(),

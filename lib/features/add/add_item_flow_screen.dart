@@ -437,7 +437,7 @@ class _ManualTab extends StatelessWidget {
             }
             final locs = snapshot.data!;
             return DropdownButtonFormField<String>(
-              value: locationId ?? LibraryRepository.defaultLocationId,
+              initialValue: locationId ?? LibraryRepository.defaultLocationId,
               decoration: const InputDecoration(
                 labelText: 'Standort',
                 border: OutlineInputBorder(),
@@ -595,7 +595,7 @@ class _IsbnTab extends StatelessWidget {
             }
             final locs = snapshot.data!;
             return DropdownButtonFormField<String>(
-              value: locationId ?? LibraryRepository.defaultLocationId,
+              initialValue: locationId ?? LibraryRepository.defaultLocationId,
               decoration: const InputDecoration(
                 labelText: 'Standort',
                 border: OutlineInputBorder(),
