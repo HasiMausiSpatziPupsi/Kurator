@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/db/app_database.dart';
 import '../data/metadata/google_books_service.dart';
+import '../data/metadata/dnb_service.dart';
 import '../data/metadata/metadata_aggregator.dart';
 import '../data/metadata/open_library_service.dart';
 import '../data/models/shelf_row.dart';
@@ -49,8 +50,13 @@ final googleBooksProvider = Provider<GoogleBooksService>((ref) {
   return GoogleBooksService(ref.watch(dioProvider));
 });
 
+final dnbServiceProvider = Provider<DnbService>((ref) {
+  return DnbService(ref.watch(dioProvider));
+});
+
 final metadataAggregatorProvider = Provider<MetadataAggregator>((ref) {
   return MetadataAggregator(
+    dnb: ref.watch(dnbServiceProvider),
     openLibrary: ref.watch(openLibraryProvider),
     googleBooks: ref.watch(googleBooksProvider),
   );

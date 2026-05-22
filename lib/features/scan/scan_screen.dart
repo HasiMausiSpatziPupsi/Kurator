@@ -1,5 +1,10 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../utils/isbn_utils.dart';
@@ -16,34 +21,23 @@ class ScanScreen extends StatefulWidget {
 
 class _ScanScreenState extends State<ScanScreen> {
   bool _handled = false;
+  final TextRecognizer _textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+  bool _isProcessingText = false;
 
-  Future<void> _finishSeriesScan(String isbn13) async {
-    final action = await showDialog<_SeriesAction>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        title: const Text('ISBN erkannt'),
-        content: SelectableText(isbn13),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, _SeriesAction.another),
-            child: const Text('Weiter scannen'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, _SeriesAction.take),
-            child: const Text('Übernehmen'),
-          ),
-        ],
-      ),
-    );
-    if (!mounted) return;
-    switch (action) {
-      case _SeriesAction.take:
-        context.pop<String>(isbn13);
-      case _SeriesAction.another:
-      case null:
-        setState(() => _handled = false);
-    }
+  @override
+  void dispose() {
+    _textRecognizer.close();
+    super.dispose();
+  }
+
+  void _handleSuccess(String isbn13) {
+    if (_handled) return;
+    setState(() => _handled = true);
+
+    // Haptisches Feedback für den "Ein-Hand-Fluss"
+    HapticFeedback.mediumImpact();
+
+    context.pop<String>(isbn13);
   }
 
   void _onDetect(BarcodeCapture capture) {
@@ -55,17 +49,57 @@ class _ScanScreenState extends State<ScanScreen> {
 
     final normalized = IsbnUtils.normalizeInput(raw);
     final parsed = IsbnUtils.parseAndSplit(normalized);
-    if (parsed?.isbn13 == null) {
-      return;
+    if (parsed?.isbn13 != null) {
+      _handleSuccess(parsed!.isbn13!);
     }
+  }
 
-    setState(() => _handled = true);
-    final isbn13 = parsed!.isbn13!;
-    if (widget.seriesMode) {
-      // ignore: discarded_futures
-      _finishSeriesScan(isbn13);
-    } else {
-      context.pop<String>(isbn13);
+  /// OCR-Verarbeitung der Kamera-Frames
+  Future<void> _processImage(BarcodeCapture capture) async {
+    if (_handled || _isProcessingText) return;
+
+    final image = capture.image;
+    if (image == null) return;
+
+    setState(() => _isProcessingText = true);
+
+    try {
+      final InputImage inputImage = InputImage.fromBytes(
+        bytes: image,
+        metadata: InputImageMetadata(
+          size: Size(capture.width!, capture.height!),
+          rotation: InputImageRotation.rotation0deg, // MobileScanner liefert oft bereits rotierte Bytes
+          format: InputImageFormat.nv21, // Standard für Android MobileScanner
+          bytesPerRow: capture.width!.toInt(),
+        ),
+      );
+
+      final RecognizedText recognizedText = await _textRecognizer.processImage(inputImage);
+
+      // Suche nach ISBN-Mustern im erkannten Text
+      final String fullText = recognizedText.text;
+
+      // Regulärer Ausdruck für ISBN-10 oder ISBN-13 (grob)
+      final isbnRegex = RegExp(r'(?:ISBN(?:-1[03])?:?\s*)?((?:\d[\s-]?){9,13}[\dX])', caseSensitive: false);
+      final matches = isbnRegex.allMatches(fullText);
+
+      for (final match in matches) {
+        final potentialIsbn = match.group(1);
+        if (potentialIsbn != null) {
+          final normalized = IsbnUtils.normalizeInput(potentialIsbn);
+          final parsed = IsbnUtils.parseAndSplit(normalized);
+          if (parsed?.isbn13 != null) {
+            _handleSuccess(parsed!.isbn13!);
+            break;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('OCR Error: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessingText = false);
+      }
     }
   }
 
@@ -85,7 +119,12 @@ class _ScanScreenState extends State<ScanScreen> {
       body: Stack(
         children: [
           MobileScanner(
-            onDetect: _onDetect,
+            onDetect: (capture) {
+              _onDetect(capture);
+              // Zusätzlich OCR versuchen
+              // ignore: discarded_futures
+              _processImage(capture);
+            },
           ),
           Positioned(
             left: 16,
@@ -94,12 +133,23 @@ class _ScanScreenState extends State<ScanScreen> {
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: Text(
-                  widget.seriesMode
-                      ? 'Nach jedem Scan kannst du übernehmen oder weiter scannen.'
-                      : 'EAN/ISBN-Barcode erfassen. Es wird nur eine gültige '
-                          'ISBN-10 oder ISBN-13 akzeptiert.',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.seriesMode
+                          ? 'Richte die Kamera auf den Barcode oder die gedruckte ISBN.'
+                          : 'EAN/ISBN-Barcode oder gedruckte ISBN erfassen.',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Handy vibriert bei Erfolg.',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -109,5 +159,3 @@ class _ScanScreenState extends State<ScanScreen> {
     );
   }
 }
-
-enum _SeriesAction { take, another }

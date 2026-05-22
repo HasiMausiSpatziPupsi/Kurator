@@ -108,6 +108,7 @@ class LibraryRepository {
   static const defaultLocationId = 'loc-default';
   static const metadataSourceOpenLibrary = 'open_library';
   static const metadataSourceGoogleBooks = 'google_books';
+  static const metadataSourceDnb = 'dnb';
   static const _uuid = Uuid();
 
   Future<String?> getMetadataCache(String isbn13, String source) async {

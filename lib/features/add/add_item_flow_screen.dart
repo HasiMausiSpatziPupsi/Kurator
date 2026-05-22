@@ -51,6 +51,14 @@ class _AddItemFlowScreenState extends ConsumerState<AddItemFlowScreen>
     if (widget.initialIsbn != null && widget.initialIsbn!.isNotEmpty) {
       _isbnField.text = widget.initialIsbn!;
       _tabs.index = 1;
+
+      // Automatische Metadaten-Abfrage nach dem ersten Frame starten
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final repo = await ref.read(libraryRepositoryProvider.future);
+        if (mounted) {
+          _lookupIsbn(repo);
+        }
+      });
     }
   }
 
