@@ -1,31 +1,37 @@
-# ISBN OCR Implementation Plan
+# Refined "Capture & Review" Workflow Plan
 
-Enable the app to recognize printed ISBN numbers (text) using the camera, supporting older books that lack barcodes.
-
-## User Review Required
-
-> [!IMPORTANT]
-> This requires adding `google_ml_kit_text_recognition`. This package uses Google Play Services on Android to perform on-device OCR.
-> I will implement a "Hybrid Scanner" that can detect both barcodes and printed ISBN text.
+Transform the scanning process into a multi-step "Capture & Review" flow to eliminate deadlocks and provide full user control over ISBN extraction.
 
 ## Proposed Changes
 
-### Dependencies
-
-#### [pubspec.yaml](file:///C:/Users/User/Desktop/Projekte/Inventur/Kurator/inventur_app_v1/pubspec.yaml)
-- Add `google_ml_kit_text_recognition: ^0.14.0` (or latest compatible).
-
-### Scan Feature
+### 1. Scan Feature (The Capture Phase)
 
 #### [scan_screen.dart](file:///C:/Users/User/Desktop/Projekte/Inventur/Kurator/inventur_app_v1/lib/features/scan/scan_screen.dart)
-- Integrate `TextRecognizer` from ML Kit.
-- Update `_onDetect` or add a secondary processing loop to analyze camera frames for text.
-- Use a Regular Expression to find ISBN-10 or ISBN-13 patterns in the recognized text.
-- Normalize and validate found numbers using `IsbnUtils`.
+- **Thumb-Friendly UI:** Move Flash and Capture buttons to the bottom third of the screen.
+- **Capture Logic:** When the button is pressed, grab the current frame and immediately navigate to the new `OcrReviewScreen` with the image data.
+- **No Background OCR:** Stop trying to read text in real-time to prevent lag and focus on getting a sharp "shot".
+
+### 2. NEW Review Feature (The Processing Phase)
+
+#### [NEW] [ocr_review_screen.dart](file:///C:/Users/User/Desktop/Projekte/Inventur/Kurator/inventur_app_v1/lib/features/scan/ocr_review_screen.dart)
+- **Visual Confirmation:** Display the captured image prominently.
+- **Action Buttons:**
+    - "Text erkennen": Trigger ML Kit OCR on the static image.
+    - "Manuelle Eingabe": Focus a text field if OCR fails or needs correction.
+- **Integration:** Once an ISBN is confirmed (via OCR or manual), proceed to the `AddItemFlowScreen`.
+
+### 3. Navigation & Providers
+
+#### [router.dart](file:///C:/Users/User/Desktop/Projekte/Inventur/Kurator/inventur_app_v1/lib/router/router.dart) (Assumption)
+- Register the new `OcrReviewScreen` route.
+
+---
 
 ## Verification Plan
 
 ### Manual Verification
-- **Barcode Scan:** Verify that standard barcode scanning still works as before.
-- **OCR Scan:** Hold the camera over a printed ISBN number (e.g., inside the imprint of an old book). Verify that the app vibrates and captures the ISBN correctly.
-- **Workflow:** Ensure the captured ISBN is passed to the `AddItemFlowScreen` and triggers the automatic DNB lookup.
+1. **Capture:** Open scanner, turn on light (bottom button), and take a photo of an ISBN.
+2. **Review:** Observe the new screen showing your photo.
+3. **OCR:** Tap "Text erkennen" and verify that the ISBN field is populated correctly.
+4. **Correction:** Manually edit a digit in the ISBN field.
+5. **Finish:** Tap "Übernehmen" and verify it leads to the DNB-enriched Add screen.

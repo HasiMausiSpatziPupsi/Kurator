@@ -15,3 +15,8 @@
 	- [x] Integrate Text Recognition into `ScanScreen`
 	- [x] Implement ISBN regex extraction from recognized text
 	- [x] Verify OCR functionality
+- [/] Enhance Scanning Workflow (Vision Phase 2)
+	- [ ] Improve Live OCR (loosen Regex, optimize processing)
+	- [ ] Implement "Photo-Fallback" Button in `ScanScreen`
+	- [ ] Implement "Delayed Perfection" (Save book with just a photo)
+	- [ ] Add Audio Feedback (Success/Failure tones)

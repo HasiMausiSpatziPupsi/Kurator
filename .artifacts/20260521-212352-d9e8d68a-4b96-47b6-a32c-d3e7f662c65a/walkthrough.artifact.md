@@ -17,18 +17,22 @@ Zusätzlich zur DNB-Integration wurde der Workflow für die einhändige Bedienun
 2.  **Haptisches Feedback:** Beim Erkennen einer ISBN vibriert das Smartphone nun kurz. Das erlaubt dir, den Scan-Erfolg zu spüren, ohne auf das Display schauen zu müssen.
 3.  **Vollautomatische Suche:** Wenn du vom Scanner kommst, startet die Metadaten-Abfrage (DNB, Google Books, Open Library) jetzt komplett automatisch. Du musst nur noch kurz prüfen und auf "Speichern" tippen.
 
-## ISBN OCR (Texterkennung)
+## Der "Capture & Review" Workflow (Neu)
 
-Für Bücher ohne Barcode wurde eine Texterkennung integriert:
+Um die Sackgasse bei schwierigen OCR-Fällen zu lösen, wurde der Prozess grundlegend verbessert:
 
-1.  **Hybrid-Scanner:** Die Kamera erkennt nun parallel zum Barcode auch gedruckte ISBN-Nummern im Text (z.B. im Impressum).
-2.  **ML Kit Integration:** Nutzt Google's Machine Learning Kit für eine schnelle und präzise Texterkennung direkt auf dem Gerät.
-3.  **Mustererkennung:** Ein intelligenter Filter (Regex) sucht im erkannten Text nach ISBN-10 oder ISBN-13 Mustern und validiert diese sofort.
+1.  **Daumenzentriertes Design:** Die Buttons für Licht und Foto befinden sich nun im unteren Drittel des Bildschirms, ideal für die Ein-Hand-Bedienung.
+2.  **Gezielte Aufnahme:** Statt wackeligem Live-Scan machst du nun ein scharfes Foto der ISBN.
+3.  **Review-Bildschirm:** Nach dem Foto landest du in einer neuen Ansicht. Hier kannst du:
+    *   Das Foto in Ruhe prüfen.
+    *   Die OCR gezielt auf das Standbild anwenden.
+    *   Die ISBN manuell korrigieren oder ergänzen, falls die OCR scheitert.
+4.  **Keine Sackgassen:** Selbst wenn die Automatik versagt, kannst du das Buch ohne Abbruch erfassen.
 
 ## Verifizierung der Änderungen
-- [x] `pubspec.yaml`: `google_ml_kit_text_recognition` hinzugefügt.
-- [x] `scan_screen.dart`: Hybrid-Logik für Barcode + OCR implementiert.
-- [x] `walkthrough.artifact.md`: Dokumentation aktualisiert.
+- [x] `scan_screen.dart`: Umbau auf manuellen Foto-Schuss und Daumen-UI.
+- [x] `ocr_review_screen.dart`: Neuer Bildschirm für die Nachbearbeitung erstellt.
+- [x] `walkthrough.artifact.md`: Workflow-Dokumentation aktualisiert.
 
 ## Nächste Schritte
 Du kannst die App nun wie gewohnt nutzen. Wenn du ein altes deutsches Buch scannst, das vorher nicht gefunden wurde, sollte es jetzt automatisch erkannt werden.
